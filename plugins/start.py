@@ -9,7 +9,7 @@ WELCOME_STICKER = "CAACAgUAAxkBAAIe72mqfmL7cPOdiA5TOr6Gsih09cVTAALgGQACfA2YVRl1r
 @Client.on_message(filters.command("start") & filters.private)
 async def start_cmd(client: Client, message: Message):
     #
-    text = "Welcome My Telegram world"
+    text = "မဂ်လာပါ အချစ်လေး ပူတူးတူးလေး သေးသေးလေး"
     typing_msg = await message.reply_text("...")
     
     display_text = ""
@@ -37,10 +37,11 @@ async def start_cmd(client: Client, message: Message):
     user_name = user.first_name if user.first_name else "User"
     
     welcome_final = (
-        f"ဟလို {user.mention} ✨\n\n"
+        f"Welcome {user.mention} ✨\n\n"
         "**အချစ်များ** မှ ကြိုဆိုပါတယ်ဗျာ။\n"
-        "ကျွန်တော်က Auto Reply နဲ့ Group Management Bot တစ်ခုဖြစ်ပါတယ်။\n"
-        "သိလိုရာများကိုအောက်က Button တွေကိုနှိပ်ပြီး လေ့လာနိုင်ပါတယ်ဗျာ။"
+        "Auto Reply နဲ့ Group Management Bot တစ်ခုဖြစ်ပါတယ်။\n"
+        "အချစ်ရေးများလည်းမေးလို့ရပါတယ် /love ဖြင့်။\n"
+        "သိလိုရာများကို /help  တွေကိုနှိပ်ပြီး လေ့လာနိုင်ပါတယ်ဗျာ။"
     )
 
     buttons = InlineKeyboardMarkup([
