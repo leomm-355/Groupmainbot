@@ -1,13 +1,16 @@
 from pyrogram import Client, filters
 from pyrogram.types import Message
 
-@Client.on_message(filters.command(["id", "info"]))
+@Client.on_message(filters.command(["id", "info"]) & (filters.group | filters.private))
 async def get_user_info(client: Client, message: Message):
-    # Reply ရှိရင် reply လူ၊ မရှိရင် command ရိုက်တဲ့လူ
-    target_id = message.reply_to_message.from_user.id if message.reply_to_message else message.from_user.id
+    # Reply ရှိရင် reply လုပ်ခံရသူ၊ မရှိရင် Command ရိုက်သူရဲ့ ID ကို ယူမယ်
+    if message.reply_to_message:
+        target_id = message.reply_to_message.from_user.id
+    else:
+        target_id = message.from_user.id
     
     try:
-        # Chat info ကနေ ယူမှ Bio (description/about) ကို ရနိုင်မှာပါ
+        # Chat info ကနေ Bio/Description ကို ဆွဲယူမယ်
         user_info = await client.get_chat(target_id)
         
         user_id = user_info.id
@@ -15,10 +18,10 @@ async def get_user_info(client: Client, message: Message):
         last_name = user_info.last_name if user_info.last_name else ""
         username = f"@{user_info.username}" if user_info.username else "မရှိပါ"
         
-        # Bio ကို ယူတဲ့နေရာမှာ bio (သို့) description (သို့) about တစ်ခုခု ဖြစ်နိုင်လို့ စစ်ပေးထားပါတယ်
-        bio = user_info.bio or user_info.description or "မရှိပါ"
+        # Bio ကို နည်းလမ်းမျိုးစုံနဲ့ စစ်ဆေးမယ်
+        bio = getattr(user_info, "bio", None) or getattr(user_info, "description", None) or "မရှိပါ"
         
-        # Premium status ကတော့ get_users ကနေပဲ ရမှာမို့ တစ်ခါပြန်စစ်ပါမယ်
+        # Premium Status အတွက် get_users ကို သုံးမယ်
         user_obj = await client.get_users(target_id)
         is_premium = "ရှိပါသည် ✅" if user_obj.is_premium else "မရှိပါ ❌"
         
@@ -37,4 +40,5 @@ async def get_user_info(client: Client, message: Message):
         await message.reply_text(info_text)
         
     except Exception as e:
-        await message.reply_text(f"❌ Error ဖြစ်သွားပါသည်: {e}")
+        # Error တက်ခဲ့ရင် (ဥပမာ User က Bot ကို Block ထားတာမျိုး)
+        await message.reply_text(f"❌ အချက်အလက် ရှာမတွေ့ပါ သို့မဟုတ် Error ဖြစ်သွားပါသည်: {e}")
