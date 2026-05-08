@@ -10,16 +10,20 @@ API_HASH = os.environ.get("API_HASH", "your_hash")
 BOT_TOKEN = os.environ.get("BOT_TOKEN", "your_token")
 MONGO_URL = os.environ.get("MONGO_URL")
 
-
-if not MONGO_URL:
-    print("❌ Error: MONGO_URL is missing in Railway Variables!")
+# --- Database Setup ---
+db = None
+if MONGO_URL:
+    try:
+        db_client = AsyncIOMotorClient(MONGO_URL)
+        db = db_client["Khh_db"]
+        print("✅ MongoDB connection initiated.")
+    except Exception as e:
+        print(f"❌ MongoDB initialization failed: {e}")
+else:
     
+    print("❌ Error: MONGO_URL is missing in Railway Variables!")
 
-
-db_client = AsyncIOMotorClient(MONGO_URL)
-db = db_client["Khh_db"]
-
-
+# --- Bot Client ---
 app = Client(
     "KHHPANDA_bot",
     api_id=API_ID,
@@ -28,6 +32,7 @@ app = Client(
     plugins=dict(root="plugins") 
 )
 
+# --- Start System with Auto-Restart ---
 if __name__ == "__main__":
     while True:
         try:
