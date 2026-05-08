@@ -3,91 +3,72 @@ from datetime import datetime
 import pytz
 from pyrogram import Client, filters
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
-from bot import db # bot.py ထဲက db ကို လှမ်းသုံးမယ်
+from pyrogram.enums import ChatMemberStatus
+import os
+from bot import db
 
-# --- Configuration ---
-DEFAULT_PHOTO = "https://files.catbox.moe/jebxwm.jpg" 
+# Railway Variable ထဲက OWNER_ID ကို ယူမယ်
+OWNER_ID = int(os.environ.get("OWNER_ID", 0))
+
+# Database collection
 welcome_settings = db["welcome_settings"]
 
-# အချိန်ကို မြန်မာစံတော်ချိန်နဲ့ ယူဖို့
 def get_now():
     tz = pytz.timezone('Asia/Yangon')
     return datetime.now(tz).strftime("%d/%m/%Y | %I:%M %p")
 
-# --- 1. Welcome On/Off Command ---
+# --- ၁။ ပိတ်/ဖွင့် စနစ် (Admin & Owner သာ) ---
 @Client.on_message(filters.command("welcome") & filters.group)
 async def toggle_welcome(client: Client, message: Message):
-    # Owner ဒါမှမဟုတ် Admin ဟုတ်မဟုတ် စစ်မယ်
-    member = await client.get_chat_member(message.chat.id, message.from_user.id)
-    if member.status not in ["administrator", "creator"]:
-        return await message.reply("ဒီ Command ကို Admin တွေပဲ သုံးလို့ရပါတယ်။")
+    chat_id = message.chat.id
+    user_id = message.from_user.id
+    
+    # Admin ဟုတ်မဟုတ် စစ်ဆေးခြင်း
+    check_status = await client.get_chat_member(chat_id, user_id)
+    is_admin = check_status.status in [ChatMemberStatus.ADMINISTRATOR, ChatMemberStatus.OWNER]
+    is_owner = (user_id == OWNER_ID)
+
+    # Admin လည်းမဟုတ်၊ Bot Owner လည်းမဟုတ်ရင် ပယ်ချမယ်
+    if not (is_admin or is_owner):
+        return await message.reply("❌ ဒီ Command ကို Group Admin နဲ့ Bot Owner သာ အသုံးပြုနိုင်ပါတယ်။")
 
     if len(message.command) < 2:
-        return await message.reply("အသုံးပြုပုံ: `/welcome on` သို့မဟုတ် `/welcome off`")
+        return await message.reply("💡 အသုံးပြုပုံ: `/welcome on` သို့မဟုတ် `/welcome off`")
 
     choice = message.command[1].lower()
     if choice == "on":
-        await welcome_settings.update_one({"chat_id": message.chat.id}, {"$set": {"status": True}}, upsert=True)
-        await message.reply("✅ ဒီ Group အတွက် Welcome Message ကို **ဖွင့်လိုက်ပါပြီ**။")
+        await welcome_settings.update_one({"chat_id": chat_id}, {"$set": {"status": True}}, upsert=True)
+        await message.reply("✅ **Welcome Message ကို ဖွင့်လိုက်ပါပြီ။**")
     elif choice == "off":
-        await welcome_settings.update_one({"chat_id": message.chat.id}, {"$set": {"status": False}}, upsert=True)
-        await message.reply("❌ ဒီ Group အတွက် Welcome Message ကို **ပိတ်လိုက်ပါပြီ**။")
+        await welcome_settings.update_one({"chat_id": chat_id}, {"$set": {"status": False}}, upsert=True)
+        await message.reply("❌ **Welcome Message ကို ပိတ်လိုက်ပါပြီ။**")
 
-# --- 2. New Member Welcome ---
+# --- ၂။ Member အသစ်ဝင်လာရင် အလိုအလျောက် ကြိုဆိုခြင်း ---
 @Client.on_message(filters.new_chat_members)
-async def welcome_member(client: Client, message: Message):
-    # Setting စစ်မယ်
-    setting = await welcome_settings.find_one({"chat_id": message.chat.id})
-    if setting and not setting.get("status", True):
+async def auto_welcome(client: Client, message: Message):
+    # အရင်ဆုံး ဒီ Group မှာ Welcome ဖွင့်ထားလား Database မှာ စစ်မယ်
+    chat_id = message.chat.id
+    setting = await welcome_settings.find_one({"chat_id": chat_id})
+    
+    # Setting မရှိသေးရင် သို့မဟုတ် status က False ဖြစ်နေရင် ဘာမှမလုပ်ဘူး
+    if setting and setting.get("status") is False:
         return
 
     for user in message.new_chat_members:
-        # Bot ကိုယ်တိုင်ဆိုရင် မပို့ဘူး
-        if user.is_self: continue
+        if user.is_self: continue # Bot ကိုယ်တိုင်ဝင်တာဆိုရင် မပို့ဘူး
 
         welcome_text = (
-            f"🎉 **ပျော်ရွှင်ပါစေ၊ ကြိုဆိုပါတယ်ဗျာ!**\n\n"
+            f"🎊 **မင်္ဂလာပါ၊ Group မှ ကြိုဆိုပါတယ်!**\n\n"
             f"👤 **အမည်:** {user.mention}\n"
             f"🆔 **ID:** `{user.id}`\n"
-            f"👥 **Group:** {message.chat.title}\n"
             f"⏰ **အချိန်:** {get_now()}\n\n"
-            "ကျွန်တော့်ကိုလည်း သင်ပိုင်ဆိုင်တဲ့ Group ထဲ ထည့်လို့ရပါတယ်နော်!"
+            f"✨ **{message.chat.title}** မှာ ပျော်ရွှင်ပါစေဗျာ။"
         )
 
-        buttons = InlineKeyboardMarkup([
-            [InlineKeyboardButton("Add Me To Your Group ➕", url=f"https://t.me/{client.me.username}?startgroup=true")]
-        ])
+        # Welcome Photo (User ရဲ့ profile ပုံ၊ မရှိရင် Default ပုံ)
+        photo = user.photo.big_file_id if user.photo else "https://files.catbox.moe/jebxwm.jpg"
 
-        photo = user.photo.big_file_id if user.photo else DEFAULT_PHOTO
-        
         try:
-            await message.reply_photo(photo=photo, caption=welcome_text, reply_markup=buttons)
-        except:
-            await message.reply_text(welcome_text, reply_markup=buttons)
-
-# --- 3. Left Member Farewell ---
-@Client.on_message(filters.left_chat_member)
-async def goodbye_member(client: Client, message: Message):
-    # Setting စစ်မယ်
-    setting = await welcome_settings.find_one({"chat_id": message.chat.id})
-    if setting and not setting.get("status", True):
-        return
-
-    user = message.left_chat_member
-    if user.is_self: return
-
-    goodbye_text = (
-        f"👋 **Group ထဲက ထွက်ခွာသွားပါပြီ...**\n\n"
-        f"👤 **အမည်:** {user.first_name if user.first_name else 'User'}\n"
-        f"🆔 **ID:** `{user.id}`\n"
-        f"👥 **Group:** {message.chat.title}\n"
-        f"⏰ **အချိန်:** {get_now()}\n\n"
-        "နောက်နောင်မှ ပြန်ဆုံကြတာပေါ့ဗျာ။"
-    )
-
-    photo = user.photo.big_file_id if user.photo else DEFAULT_PHOTO
-
-    try:
-        await message.reply_photo(photo=photo, caption=goodbye_text)
-    except:
-        await message.reply_text(goodbye_text)
+            await message.reply_photo(photo=photo, caption=welcome_text)
+        except Exception:
+            await message.reply_text(welcome_text)
