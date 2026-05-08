@@ -11,6 +11,11 @@ BOT_TOKEN = os.environ.get("BOT_TOKEN", "your_token")
 MONGO_URL = os.environ.get("MONGO_URL")
 
 
+if not MONGO_URL:
+    print("❌ Error: MONGO_URL is missing in Railway Variables!")
+    
+
+
 db_client = AsyncIOMotorClient(MONGO_URL)
 db = db_client["Khh_db"]
 
@@ -26,11 +31,13 @@ app = Client(
 if __name__ == "__main__":
     while True:
         try:
-            print("Bot with Plugins is starting...")
+            print("✨ KHHPANDA Bot with Plugins is starting...")
             app.run()
         except Exception as e:
-            print(f"Crashed: {e}")
+            
+            print(f"⚠️ Bot Crashed: {e}")
+            print("🔄 Restarting in 5 seconds...")
             time.sleep(5)
             continue
 
-#KhitHlainHtet
+# KhitHlainHtet
