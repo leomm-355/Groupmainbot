@@ -212,7 +212,7 @@ BAD_MESSAGES = [
 ]
 
 
-@Client.on_message(filters.command("love") & filters.group)
+@Client.on_message(filters.command("love") & (filters.group | filters.private))
 async def love_horoscope(client: Client, message: Message):
     # အကောင်း နဲ့ အဆိုး စာရင်းနှစ်ခုလုံးကို ပေါင်းလိုက်မယ်
     all_messages = GOOD_MESSAGES + BAD_MESSAGES
@@ -225,8 +225,7 @@ async def love_horoscope(client: Client, message: Message):
         f"💖**{message.from_user.mention}**💖\n"
         "━━━━━━━━━━━━━━━━━━\n\n"
         f"_{selected_msg}_\n\n"
-        "━━━━━━━━━━━━━━━━━━\n"
-        "✨ ကံကြမ္မာဆိုတာ ကိုယ့်လက်ထဲမှာပဲ ရှိတာပါနော် ✨"
+        "━━━━━━━━━━━━━━━━━━"
     )
     
     await message.reply_text(response_text)
