@@ -1,52 +1,40 @@
 from pyrogram import Client, filters
 from pyrogram.types import Message
 
-@Client.on_message(filters.command(["id", "info"]) & filters.group)
+@Client.on_message(filters.command(["id", "info"]))
 async def get_user_info(client: Client, message: Message):
-    # Reply ပြန်ထားတဲ့ message ရှိရင် အဲ့ဒီလူရဲ့ info ကိုယူမယ်
-    # မရှိရင် command ရိုက်တဲ့သူရဲ့ info ကိုယူမယ်
-    target_user = message.reply_to_message.from_user if message.reply_to_message else message.from_user
+    # Reply ရှိရင် reply လူ၊ မရှိရင် command ရိုက်တဲ့လူ
+    target_id = message.reply_to_message.from_user.id if message.reply_to_message else message.from_user.id
     
-    # User ရဲ့ အသေးစိတ် အချက်အလက်ကို ထပ်မံရယူခြင်း (Bio သိရအောင်)
-    full_user = await client.get_users(target_user.id)
-    
-    # အချက်အလက်များ ထုတ်ယူခြင်း
-    user_id = full_user.id
-    first_name = full_user.first_name
-    last_name = full_user.last_name if full_user.last_name else ""
-    username = f"@{full_user.username}" if full_user.username else "မရှိပါ"
-    bio = full_user.bio if full_user.bio else "Bio ရေးမထားပါ"
-    is_premium = "ရှိပါသည် ✅" if full_user.is_premium else "မရှိပါ ❌"
-    
-    # စာသားအလှဆင်ခြင်း
-    info_text = (
-        "✨ **Information** ✨\n"
-        "━━━━━━━━━━━━━━━━━━\n"
-        f"👤 **အမည်:** {first_name} {last_name}\n"
-        f"🆔 **User ID:** `{user_id}`\n"
-        f"🔗 **Username:** {username}\n"
-        f"📝 **Bio:** \n_{bio}_\n\n"
-        f"🌟 **Premium:** {is_premium}\n"
-        "━━━━━━━━━━━━━━━━━━\n"
-        f"✨ **Requested by:** {message.from_user.mention}"
-    )
-    
-    await message.reply_text(info_text)
-
-# Private Chat မှာလည်း သုံးလို့ရအောင် ထပ်ရေးပေးထားခြင်း
-@Client.on_message(filters.command(["id", "info"]) & filters.private)
-async def get_info_pv(client: Client, message: Message):
-    full_user = await client.get_users(message.from_user.id)
-    
-    info_text = (
-        "✨ **Information** ✨\n"
-        "━━━━━━━━━━━━━━━━━━\n"
-        f"👤 **အမည်:** {full_user.first_name}\n"
-        f"🆔 **User ID:** `{full_user.id}`\n"
-        f"🔗 **Username:** @{full_user.username if full_user.username else 'မရှိပါ'}\n"
-        f"📝 **Bio:** \n_{full_user.bio if full_user.bio else 'မရှိပါ'}_\n\n"
-        f"🌟 **Premium:** {'ရှိပါသည် ✅' if full_user.is_premium else 'မရှိပါ ❌'}\n"
-        "━━━━━━━━━━━━━━━━━━"
-    )
-    
-    await message.reply_text(info_text)
+    try:
+        # Chat info ကနေ ယူမှ Bio (description/about) ကို ရနိုင်မှာပါ
+        user_info = await client.get_chat(target_id)
+        
+        user_id = user_info.id
+        first_name = user_info.first_name
+        last_name = user_info.last_name if user_info.last_name else ""
+        username = f"@{user_info.username}" if user_info.username else "မရှိပါ"
+        
+        # Bio ကို ယူတဲ့နေရာမှာ bio (သို့) description (သို့) about တစ်ခုခု ဖြစ်နိုင်လို့ စစ်ပေးထားပါတယ်
+        bio = user_info.bio or user_info.description or "မရှိပါ"
+        
+        # Premium status ကတော့ get_users ကနေပဲ ရမှာမို့ တစ်ခါပြန်စစ်ပါမယ်
+        user_obj = await client.get_users(target_id)
+        is_premium = "ရှိပါသည် ✅" if user_obj.is_premium else "မရှိပါ ❌"
+        
+        info_text = (
+            "✨ **User Information** ✨\n"
+            "━━━━━━━━━━━━━━━━━━\n"
+            f"👤 **အမည်:** {first_name} {last_name}\n"
+            f"🆔 **User ID:** `{user_id}`\n"
+            f"🔗 **Username:** {username}\n"
+            f"📝 **Bio:** \n_{bio}_\n\n"
+            f"🌟 **Premium:** {is_premium}\n"
+            "━━━━━━━━━━━━━━━━━━\n"
+            f"✨ **Requested by:** {message.from_user.mention}"
+        )
+        
+        await message.reply_text(info_text)
+        
+    except Exception as e:
+        await message.reply_text(f"❌ Error ဖြစ်သွားပါသည်: {e}")
