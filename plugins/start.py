@@ -5,7 +5,7 @@ from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 
 # --- Configuration ---
 # မင်းသတ်မှတ်ထားတဲ့ ပုံ Link
-DEFAULT_PHOTO = "https://files.catbox.moe/jebxwm.jpg" 
+DEFAULT_PHOTO = "https://files.catbox.moe/jqgw0f.jpg" 
 WELCOME_STICKER = "CAACAgUAAxkBAAIe72mqfmL7cPOdiA5TOr6Gsih09cVTAALgGQACfA2YVRl1rlBfNwT5HgQ"
 
 @Client.on_message(filters.command("start") & filters.private)
