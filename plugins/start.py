@@ -47,8 +47,8 @@ async def start_cmd(client: Client, message: Message):
 
     buttons = InlineKeyboardMarkup([
         [
-            InlineKeyboardButton("Channel 📢", url="https://t.me/myanmarbot_music"),
-            InlineKeyboardButton("Developer 👨‍💻", url="http://t.me/HANTHAR999")
+            InlineKeyboardButton("𝘾𝙝𝙖𝙣𝙣𝙚𝙡 📢", url="https://t.me/CHANNEL_FOR_USS"),
+            InlineKeyboardButton(" 𝘿𝙚𝙫𝙚𝙡𝙤𝙥𝙚𝙧 👨‍💻", url=" tg://resolve?domain=ThanMinHtwe&text=𝙃𝙚𝙮𝙃𝙚𝙡𝙡𝙤𝙆𝙤𝘽𝙖𝙁𝙞𝙣"),
         ],
         [
             InlineKeyboardButton("Group 👥", url="https://t.me/myanmar_music_Bot2027"),
