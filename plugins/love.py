@@ -1,6 +1,11 @@
 import random
 from pyrogram import Client, filters
 from pyrogram.types import Message
+from bot import db  # Database ချိတ်ဆက်မှုအတွက်
+
+# Database မှာ ပို့ပြီးသားစာတွေကို မှတ်ဖို့ Collection ဆောက်မယ်
+used_messages_db = db["used_love_messages"]
+
 
 # --- အကောင်း စာသား ၁၀၀ (နမူနာအချို့) ---
 GOOD_MESSAGES = [
@@ -214,18 +219,38 @@ BAD_MESSAGES = [
 
 @Client.on_message(filters.command("love") & (filters.group | filters.private))
 async def love_horoscope(client: Client, message: Message):
-    # အကောင်း နဲ့ အဆိုး စာရင်းနှစ်ခုလုံးကို ပေါင်းလိုက်မယ်
+    user_id = message.from_user.id
     all_messages = GOOD_MESSAGES + BAD_MESSAGES
     
-    # Random တစ်ခု ရွေးမယ်
-    selected_msg = random.choice(all_messages)
-    
-    # ရလဒ် ထုတ်ပြမယ်
+    # ၁။ ဒီ User အတွက် ပို့ပြီးသားစာရင်းကို DB ကနေ ကြည့်မယ်
+    user_data = await used_messages_db.find_one({"user_id": user_id})
+    used_indices = user_data.get("indices", []) if user_data else []
+
+    # ၂။ မပို့ရသေးတဲ့ စာ index တွေကိုပဲ ရွေးထုတ်မယ်
+    available_indices = [i for i in range(len(all_messages)) if i not in used_indices]
+
+    # ၃။ စာ ၁၀၀ လုံး ကုန်သွားရင် စာရင်းပြန်ရှင်းမယ် (Reset)
+    if not available_indices:
+        used_indices = []
+        available_indices = [i for i in range(len(all_messages))]
+
+    # ၄။ မထပ်သေးတဲ့အထဲက Random တစ်ခု ရွေးမယ်
+    selected_index = random.choice(available_indices)
+    selected_msg = all_messages[selected_index]
+
+    # ၅။ ရွေးပြီးသား index ကို DB ထဲမှာ မှတ်ထားမယ်
+    used_indices.append(selected_index)
+    await used_messages_db.update_one(
+        {"user_id": user_id},
+        {"$set": {"indices": used_indices}},
+        upsert=True
+    )
+
+    # ၆။ စာပြန်ပို့မယ်
     response_text = (
-        f"💖**{message.from_user.mention}**💖\n"
-        "━━━━━━━━━━━━━━━━━━\n\n"
-        f"_{selected_msg}_\n\n"
-        "━━━━━━━━━━━━━━━━━━"
+        f"💖 **{message.from_user.mention}** 💖\n"
+        "━━━━━━━━━━━━━━━━━━\n"
+        f"{selected_msg}"
     )
     
     await message.reply_text(response_text)
