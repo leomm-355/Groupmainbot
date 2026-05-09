@@ -7,11 +7,13 @@ from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 from pyrogram.enums import ChatMemberStatus
 from bot import db
 
-# Railway Variable ထဲက OWNER_ID
-OWNER_ID = int(os.environ.get("OWNER_ID", 0))
+# Database Collection
 welcome_settings = db["welcome_settings"]
 
-# မင်း သတ်မှတ်ချင်တဲ့ ပုံ Link ကို ဒီမှာ ပြောင်းလို့ရတယ်
+# Bot Owner ID
+OWNER_ID = int(os.environ.get("OWNER_ID", 0))
+
+# မင်း သတ်မှတ်ထားတဲ့ ပုံ Link
 WELCOME_PHOTO = "https://files.catbox.moe/jebxwm.jpg"
 
 def get_now():
@@ -24,20 +26,17 @@ async def toggle_welcome(client: Client, message: Message):
     chat_id = message.chat.id
     user_id = message.from_user.id
     
-    # Admin စစ်ဆေးခြင်း
     try:
         member = await client.get_chat_member(chat_id, user_id)
         is_admin = member.status in [ChatMemberStatus.ADMINISTRATOR, ChatMemberStatus.OWNER]
     except:
         is_admin = False
         
-    is_owner = (user_id == OWNER_ID)
-
-    if not (is_admin or is_owner):
-        return await message.reply_text("❌ Admin သာ သုံးနိုင်ပါတယ်။")
+    if not (is_admin or user_id == OWNER_ID):
+        return await message.reply_text("❌ Admin များသာ သုံးနိုင်ပါတယ်။")
 
     if len(message.command) < 2:
-        return await message.reply_text("💡 `/welcome on` သို့မဟုတ် `/welcome off` လို့ ရိုက်ပေးပါ။")
+        return await message.reply_text("💡 `/welcome on` သို့မဟုတ် `/welcome off` လို့ ရိုက်ပါ။")
 
     choice = message.command[1].lower()
     if choice == "on":
@@ -49,18 +48,19 @@ async def toggle_welcome(client: Client, message: Message):
 
 # --- ၂။ Member အသစ်ဝင်လာရင် ကြိုဆိုခြင်း ---
 @Client.on_message(filters.new_chat_members)
-async def auto_welcome(client: Client, message: Message):
+async def auto_welcome(client, message):
     chat_id = message.chat.id
     
     # Database စစ်မယ်
     setting = await welcome_settings.find_one({"chat_id": chat_id})
-    
-    # ပိတ်ထားရင် ဘာမှမလုပ်ဘူး (Default ကတော့ ပွင့်နေမယ်)
     if setting and setting.get("status") is False:
         return
 
     for user in message.new_chat_members:
-        if user.is_self: continue 
+        # Bot ကိုယ်တိုင်ဝင်လာတာဆိုရင် ဘာမှမလုပ်ဘူး
+        me = await client.get_me()
+        if user.id == me.id:
+            continue
 
         welcome_text = (
             f"🎊 **မင်္ဂလာပါ၊ Group မှ ကြိုဆိုပါတယ်!**\n\n"
@@ -71,20 +71,23 @@ async def auto_welcome(client: Client, message: Message):
         )
         
         buttons = InlineKeyboardMarkup([
-            [InlineKeyboardButton("Add Me To Your Group ➕", url=f"https://t.me/{client.me.username}?startgroup=true")]
+            [InlineKeyboardButton("Add Me To Your Group ➕", url=f"https://t.me/{me.username}?startgroup=true")]
         ])
 
         try:
-            # မင်း သတ်မှတ်ထားတဲ့ ပုံသေသတ်မှတ်ပုံနဲ့ပဲ ပို့မယ်
-            await message.reply_photo(photo=WELCOME_PHOTO, caption=welcome_text, reply_markup=buttons)
+            await client.send_photo(
+                chat_id=chat_id,
+                photo=WELCOME_PHOTO,
+                caption=welcome_text,
+                reply_markup=buttons
+            )
         except Exception as e:
-            # ပုံပို့လို့မရရင် စာပဲပို့မယ်
-            print(f"Welcome Error: {e}")
-            await message.reply_text(welcome_text, reply_markup=buttons)
+            print(f"Error: {e}")
+            await client.send_message(chat_id, welcome_text, reply_markup=buttons)
 
 # --- ၃။ Member ထွက်သွားရင် နှုတ်ဆက်ခြင်း ---
 @Client.on_message(filters.left_chat_member)
-async def auto_goodbye(client: Client, message: Message):
+async def auto_goodbye(client, message):
     chat_id = message.chat.id
     setting = await welcome_settings.find_one({"chat_id": chat_id})
     
@@ -92,7 +95,8 @@ async def auto_goodbye(client: Client, message: Message):
         return
 
     user = message.left_chat_member
-    if user.is_self: return
+    me = await client.get_me()
+    if user.id == me.id: return
 
     goodbye_text = (
         f"👋 **နှုတ်ဆက်ခဲ့ပါတယ်ဗျာ!**\n\n"
@@ -102,6 +106,6 @@ async def auto_goodbye(client: Client, message: Message):
     )
 
     try:
-        await message.reply_text(goodbye_text)
+        await client.send_message(chat_id, goodbye_text)
     except:
         pass
