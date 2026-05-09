@@ -59,7 +59,7 @@ async def start_cmd(client: Client, message: Message):
         ]
     ])
 
-    # User ပုံ ရှိရှိ မရှိရှိ DEFAULT_PHOTO ကိုပဲ သုံးမယ်
+    # User ပုံ ရှိရှိ မရှိရှိ DEFAULT_PHOTO ကိုပဲ သုံးမယ
     try:
         await message.reply_photo(
             photo=DEFAULT_PHOTO,
