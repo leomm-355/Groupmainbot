@@ -11,7 +11,7 @@ WELCOME_STICKER = "CAACAgUAAxkBAAIe72mqfmL7cPOdiA5TOr6Gsih09cVTAALgGQACfA2YVRl1r
 @Client.on_message(filters.command("start") & filters.private)
 async def start_cmd(client: Client, message: Message):
     # ၁။ စာသား တစ်လုံးချင်းပေါ်အောင်လုပ်မယ်
-    text = "မဂ်လာပါ အချစ်လေး ပူတူးတူးလေး သေးသေးလေး"
+    text = "မဂ်လာပါ အချစ်လေး ပူတူးတူးလေး"
     typing_msg = await message.reply_text("...")
     
     display_text = ""
