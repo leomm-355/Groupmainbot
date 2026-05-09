@@ -11,44 +11,51 @@ from bot import db
 OWNER_ID = int(os.environ.get("OWNER_ID", 0))
 welcome_settings = db["welcome_settings"]
 
+# မင်း သတ်မှတ်ချင်တဲ့ ပုံ Link ကို ဒီမှာ ပြောင်းလို့ရတယ်
+WELCOME_PHOTO = "https://files.catbox.moe/jebxwm.jpg"
+
 def get_now():
     tz = pytz.timezone('Asia/Yangon')
     return datetime.now(tz).strftime("%d/%m/%Y | %I:%M %p")
 
-# --- ၁။ ပိတ်/ဖွင့် စနစ် (Admin & Owner သာ) ---
+# --- ၁။ ပိတ်/ဖွင့် စနစ် ---
 @Client.on_message(filters.command("welcome") & filters.group)
 async def toggle_welcome(client: Client, message: Message):
     chat_id = message.chat.id
     user_id = message.from_user.id
     
+    # Admin စစ်ဆေးခြင်း
     try:
         member = await client.get_chat_member(chat_id, user_id)
-        is_group_admin = member.status in [ChatMemberStatus.ADMINISTRATOR, ChatMemberStatus.OWNER]
+        is_admin = member.status in [ChatMemberStatus.ADMINISTRATOR, ChatMemberStatus.OWNER]
     except:
-        is_group_admin = False
+        is_admin = False
         
-    is_bot_owner = (user_id == OWNER_ID)
+    is_owner = (user_id == OWNER_ID)
 
-    if not (is_group_admin or is_bot_owner):
-        return await message.reply_text("❌ ဒီ Command ကို Admin များသာ သုံးနိုင်ပါတယ်။")
+    if not (is_admin or is_owner):
+        return await message.reply_text("❌ Admin သာ သုံးနိုင်ပါတယ်။")
 
     if len(message.command) < 2:
-        return await message.reply_text("💡 `/welcome on` သို့မဟုတ် `/welcome off` ဟု သုံးပါ။")
+        return await message.reply_text("💡 `/welcome on` သို့မဟုတ် `/welcome off` လို့ ရိုက်ပေးပါ။")
 
     choice = message.command[1].lower()
     if choice == "on":
         await welcome_settings.update_one({"chat_id": chat_id}, {"$set": {"status": True}}, upsert=True)
-        await message.reply_text("✅ Welcome စနစ်ကို **ဖွင့်လိုက်ပါပြီ**။")
+        await message.reply_text("✅ Welcome စနစ်ကို ဖွင့်လိုက်ပါပြီ။")
     elif choice == "off":
         await welcome_settings.update_one({"chat_id": chat_id}, {"$set": {"status": False}}, upsert=True)
-        await message.reply_text("❌ Welcome စနစ်ကို **ပိတ်လိုက်ပါပြီ**။")
+        await message.reply_text("❌ Welcome စနစ်ကို ပိတ်လိုက်ပါပြီ။")
 
 # --- ၂။ Member အသစ်ဝင်လာရင် ကြိုဆိုခြင်း ---
 @Client.on_message(filters.new_chat_members)
 async def auto_welcome(client: Client, message: Message):
     chat_id = message.chat.id
+    
+    # Database စစ်မယ်
     setting = await welcome_settings.find_one({"chat_id": chat_id})
     
+    # ပိတ်ထားရင် ဘာမှမလုပ်ဘူး (Default ကတော့ ပွင့်နေမယ်)
     if setting and setting.get("status") is False:
         return
 
@@ -63,15 +70,16 @@ async def auto_welcome(client: Client, message: Message):
             f"✨ **{message.chat.title}** မှာ ပျော်ရွှင်ပါစေဗျာ။"
         )
         
-        # Add Me To Your Group Button
         buttons = InlineKeyboardMarkup([
             [InlineKeyboardButton("Add Me To Your Group ➕", url=f"https://t.me/{client.me.username}?startgroup=true")]
         ])
 
-        photo = user.photo.big_file_id if user.photo else "https://files.catbox.moe/jebxwm.jpg"
         try:
-            await message.reply_photo(photo=photo, caption=welcome_text, reply_markup=buttons)
-        except:
+            # မင်း သတ်မှတ်ထားတဲ့ ပုံသေသတ်မှတ်ပုံနဲ့ပဲ ပို့မယ်
+            await message.reply_photo(photo=WELCOME_PHOTO, caption=welcome_text, reply_markup=buttons)
+        except Exception as e:
+            # ပုံပို့လို့မရရင် စာပဲပို့မယ်
+            print(f"Welcome Error: {e}")
             await message.reply_text(welcome_text, reply_markup=buttons)
 
 # --- ၃။ Member ထွက်သွားရင် နှုတ်ဆက်ခြင်း ---
@@ -90,8 +98,7 @@ async def auto_goodbye(client: Client, message: Message):
         f"👋 **နှုတ်ဆက်ခဲ့ပါတယ်ဗျာ!**\n\n"
         f"👤 **အမည်:** {user.first_name}\n"
         f"🆔 **ID:** `{user.id}`\n"
-        f"⏰ **အချိန်:** {get_now()}\n\n"
-        "နောက်နောင်မှ ပြန်ဆုံကြတာပေါ့။"
+        f"⏰ **အချိန်:** {get_now()}\n"
     )
 
     try:
