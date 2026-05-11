@@ -6,7 +6,7 @@ from pyrogram.types import Message, ChatPermissions
 
 # --- သတ်မှတ်ချက်များ ---
 # သင့်ရဲ့ User ID ကို ဒီမှာ အမှန်အတိုင်း ပြောင်းထည့်ပါ
-OWNER_ID = 8266394986
+OWNER_ID = 8451761652
 
 # Link စစ်တဲ့ ပုံစံ
 LINK_PATTERN = r"(https?://\S+|t\.me/\S+|@\S+)"
