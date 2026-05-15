@@ -49,12 +49,12 @@ async def broadcast_msg(client: Client, message: Message):
     u_failed = 0
     async for user in users_db.find():
         try:
-            await msg.copy(chat_id=user["user_id"])
+            await msg.forward(chat_id=user["user_id"])
             u_count += 1
             await asyncio.sleep(0.3) 
         except FloodWait as e:
             await asyncio.sleep(e.value)
-            await msg.copy(chat_id=user["user_id"])
+            await msg.forward(chat_id=user["user_id"])
             u_count += 1
         except Exception:
             # Block ထားတဲ့သူကို Database ထဲက ဖျက်မယ်
@@ -66,12 +66,12 @@ async def broadcast_msg(client: Client, message: Message):
     g_failed = 0
     async for group in groups_db.find():
         try:
-            await msg.copy(chat_id=group["chat_id"])
+            await msg.forward(chat_id=group["chat_id"])
             g_count += 1
             await asyncio.sleep(0.3)
         except FloodWait as e:
             await asyncio.sleep(e.value)
-            await msg.copy(chat_id=group["chat_id"])
+            await msg.forward(chat_id=group["chat_id"])
             g_count += 1
         except Exception:
             # Bot မရှိတော့တဲ့ Group ကို Database ထဲက ဖျက်မယ်
