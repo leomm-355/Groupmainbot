@@ -7,8 +7,9 @@ from bot import db
 # Database Collection
 replies = db["auto_replies"]
 
-# Railway Variable ထဲက OWNER_ID ကို ယူမယ် (မရှိရင် 0 လို့ ထားမယ်)
-OWNER_ID = int(os.environ.get("OWNER_ID", 0))
+# Variable ထဲက OWNER_ID ကို ယူမယ် (မရှိရင် 0 လို့ ထားမယ်)
+OWNER_ID_STR = os.environ.get("OWNER_ID", "0")
+OWNER_IDS = [int(i.strip()) for i in OWNER_ID_STR.split(",") if i.strip().isdigit()]
 
 @Client.on_message(filters.group & ~filters.bot)
 async def auto_learn_and_reply(client: Client, message: Message):
