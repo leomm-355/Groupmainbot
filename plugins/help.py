@@ -32,13 +32,13 @@ async def help_command(client: Client, message: Message):
     if is_admin or user_id == OWNER_ID:
         help_text += "👮 **Admin Commands:**\n"
         help_text += "• `/all` - အဖွဲ့ဝင်အားလုံးကို Tag ခေါ်ရန်\n"
-        help_text += "• `/welcome on/off` - ကြိုဆိုစာစနစ်\n\n"
+        
 
     # --- ၃။ Owner အတွက်သာ စစ်ဆေးခြင်း ---
     if user_id == OWNER_ID:
         help_text += "👑 **Owner Commands:**\n"
         help_text += "• `/broadcast` - သတင်းစကားပါးရန်\n"
-        help_text += "• `/del` - အမေးအဖြေမှတ်ထားတာဖျက်ရန်\n\n"
+        
 
     help_text += "━━━━━━━━━━━━━━━━━━\n"
     help_text += "💡 _Command များကို အသုံးပြုရန် စာရိုက်ကွက်တွင် ရိုက်ထည့်ပါ_"
