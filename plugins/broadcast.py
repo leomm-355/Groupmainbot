@@ -10,10 +10,8 @@ users_db = db["users"]
 groups_db = db["groups"]
 
 #  Variable ထဲက OWNER_ID ကို ယူမယ်
-try:
-    OWNER_ID = int(os.environ.get("OWNER_ID", 0))
-except:
-    OWNER_ID = 0
+OWNER_ID_STR = os.environ.get("OWNER_ID", "0")
+OWNER_IDS = [int(i.strip()) for i in OWNER_ID_STR.split(",") if i.strip().isdigit()]
 
 # --- ၁။ ID များကို Database ထဲသိမ်းခြင်း ---
 @Client.on_message(filters.command("start") & filters.private, group=10)
@@ -36,7 +34,7 @@ async def track_groups(_, message: Message):
                 )
 
 # --- ၂။ Broadcast Command (Owner သီးသန့်) ---
-@Client.on_message(filters.command("broadcast") & filters.user(OWNER_ID))
+ID@Client.on_message(filters.command("broadcast") & filters.user(OWNER_IDS))
 async def broadcast_msg(client: Client, message: Message):
     if not message.reply_to_message:
         return await message.reply_text("❌ Broadcast လုပ်မယ့်စာကို Reply ထောက်ပြီး `/broadcast` လို့ ရိုက်ပါ။")
