@@ -2,11 +2,9 @@ import os
 from pyrogram import Client, filters
 from pyrogram.types import Message
 
-# Railway Variable ထဲက OWNER_ID ကို ယူမယ်
-try:
-    OWNER_ID = int(os.environ.get("OWNER_ID", 0))
-except:
-    OWNER_ID = 0
+# Variable ထဲက OWNER_ID ကို ယူမယ်
+OWNER_ID_STR = os.environ.get("OWNER_ID", "0")
+OWNER_IDS = [int(i.strip()) for i in OWNER_ID_STR.split(",") if i.strip().isdigit()]
 
 @Client.on_message(filters.command("help"))
 async def help_command(client: Client, message: Message):
