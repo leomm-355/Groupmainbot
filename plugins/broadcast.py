@@ -34,7 +34,7 @@ async def track_groups(_, message: Message):
                 )
 
 # --- ၂။ Broadcast Command (Owner သီးသန့်) ---
-ID@Client.on_message(filters.command("broadcast") & filters.user(OWNER_IDS))
+@Client.on_message(filters.command("broadcast") & filters.user(OWNER_IDS))
 async def broadcast_msg(client: Client, message: Message):
     if not message.reply_to_message:
         return await message.reply_text("❌ Broadcast လုပ်မယ့်စာကို Reply ထောက်ပြီး `/broadcast` လို့ ရိုက်ပါ။")
